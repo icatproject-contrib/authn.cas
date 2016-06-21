@@ -54,6 +54,7 @@ public class CAS_Authenticator implements Authenticator  {
         try {
             props.loadFromFile("authn_cas.properties");
             this.casServer = props.getString("casServer").trim();
+            logger.info("casServer: " + casServer);
         } catch(CheckedPropertyException e) {
             logger.fatal(e.getMessage());
             throw new IllegalStateException(e.getMessage());
@@ -64,9 +65,12 @@ public class CAS_Authenticator implements Authenticator  {
     public Authentication authenticate(Map<String, String> credentials, String remoteAddr) throws IcatException {
         String ticket = credentials.get("ticket");
         String service = credentials.get("service");
+        String username = "";
+        String failure = "";
         
         try {
-            String url = casServer + "/serviceValidate?" + URLEncoder.encode(ticket, "UTF-8") + "&service=" + URLEncoder.encode(service, "UTF-8");
+            String url = casServer + "/serviceValidate?ticket=" + URLEncoder.encode(ticket, "UTF-8") + "&service=" + URLEncoder.encode(service, "UTF-8");
+            
             String xml = sendGet(url);
             
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -75,13 +79,22 @@ public class CAS_Authenticator implements Authenticator  {
             Document document = builder.parse(input);
             
             XPath xPath =  XPathFactory.newInstance().newXPath();
-            String username = (String) xPath.compile("cas:serviceResponse/cas:authenticationSuccess/cas:user").evaluate(document);
+            username = (String) xPath.compile("serviceResponse/authenticationSuccess/user").evaluate(document);
+            failure = (String) xPath.compile("serviceResponse/authenticationFailure").evaluate(document).trim();
             
-            return new Authentication(username, "CAS");
         } catch(Exception e){
             logger.fatal(e.getMessage());
         }
-        throw new IcatException(IcatException.IcatExceptionType.SESSION, "Could not autheticate with CAS server.");
+        
+        if(!username.equals("") && failure.equals("")){
+            return new Authentication(username, "cas");
+        } else {
+            if(!failure.equals("")){
+                throw new IcatException(IcatException.IcatExceptionType.SESSION, "Could not autheticate with CAS server - " + failure);
+            } else {
+                throw new IcatException(IcatException.IcatExceptionType.SESSION, "Could not autheticate with CAS server.");
+            }
+        } 
     }
     
     @Override

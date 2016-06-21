@@ -4,7 +4,7 @@
 
     <groupId>org.icatproject</groupId>
     <artifactId>authn.cas</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>authn.cas</name>
