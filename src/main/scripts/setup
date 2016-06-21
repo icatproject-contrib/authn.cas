@@ -14,7 +14,7 @@ def undeploy():
 actions, arg, props = getActions("authn_cas-setup.properties", [])
 
 prop_name = "authn_cas.properties"
-prop_list = ["user.list"]
+prop_list = ["casServer"]
 
 if arg in ["CONFIGURE", "INSTALL"]:
     actions.configure(prop_name, prop_list)
